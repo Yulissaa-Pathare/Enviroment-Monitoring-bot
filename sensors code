@@ -1,0 +1,101 @@
+// DHT11 Sensor
+#include <DHT.h>
+#define DHTPIN 13
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
+// Analog Hall Sensor
+#define ANALOG_HALL_PIN 27
+
+// Linear Hall Sensor
+#define LINEAR_HALL_AO 25
+#define LINEAR_HALL_DO 26
+
+// MQ Gas Sensor (Analog)
+#define MQ_SENSOR_PIN 34
+
+// Water Level Sensor (Digital)
+#define WATER_SENSOR_PIN 15
+
+// Ultrasonic Sensor
+#define TRIG_PIN 22
+#define ECHO_PIN 35
+
+// Soil Moisture Sensor (Analog)
+#define SOIL_SENSOR_PIN 2
+
+void setup() {
+  Serial.begin(9600);
+  dht.begin();
+
+  pinMode(WATER_SENSOR_PIN, INPUT);
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(LINEAR_HALL_DO, INPUT);
+
+  delay(2000);
+}
+
+void loop() {
+  Serial.println("========== SENSOR READINGS ==========");
+
+  // DHT11 Sensor
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+  float f = dht.readTemperature(true);
+
+  if (!isnan(h) && !isnan(t) && !isnan(f)) {
+    float hif = dht.computeHeatIndex(f, h);
+    float hic = dht.computeHeatIndex(t, h, false);
+    Serial.printf("Humidity: %.2f %% | Temp: %.2f °C / %.2f °F | Heat Index: %.2f °C / %.2f °F\n", h, t, f, hic, hif);
+  } else {
+    Serial.println("Failed to read from DHT11 sensor");
+  }
+
+  // MQ Gas Sensor
+  int mqValue = analogRead(MQ_SENSOR_PIN);
+  float lpg = mqValue * (1000.0 / 4095.0);
+  float co = mqValue * (400.0 / 4095.0);
+  float smoke = mqValue * (700.0 / 4095.0);
+  Serial.printf("LPG: %.2f ppm | CO: %.2f ppm | SMOKE: %.2f ppm\n", lpg, co, smoke);
+
+  // Water Level Sensor
+  int waterLevel = digitalRead(WATER_SENSOR_PIN);
+  Serial.print("Water Level: ");
+  Serial.println(waterLevel == LOW ? "Low" : "Normal");
+
+  // Ultrasonic Sensor
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+  float duration = pulseIn(ECHO_PIN, HIGH);
+  float distance = (duration * 0.0343) / 2.0;
+  Serial.print("Ultrasonic Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  // Soil Moisture Sensor
+  int soilValue = analogRead(SOIL_SENSOR_PIN);
+  int soilPercent = map(soilValue, 0, 4095, 100, 0);
+  Serial.print("Soil Moisture: ");
+  Serial.print(soilPercent);
+  Serial.println(" %");
+
+  // Analog Hall Sensor
+  int analogHallVal = analogRead(ANALOG_HALL_PIN);
+  Serial.print("Analog Hall Value: ");
+  Serial.println(analogHallVal);
+
+  // Linear Hall Sensor
+  int linearHallAnalog = analogRead(LINEAR_HALL_AO);
+  bool linearHallDigital = digitalRead(LINEAR_HALL_DO);
+  Serial.print("Linear Hall Analog: ");
+  Serial.print(linearHallAnalog);
+  Serial.print(" | Digital: ");
+  Serial.println(linearHallDigital);
+
+  Serial.println("=====================================");
+  delay(1000);
+}
