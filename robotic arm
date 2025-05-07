@@ -1,0 +1,46 @@
+
+
+#include <BluetoothSerial.h>
+#include <ESP32Servo.h>
+
+BluetoothSerial SerialBT;
+
+Servo servo1, servo2, servo3;
+
+void setup() {
+    Serial.begin(115200);
+    SerialBT.begin("ESP32_RoboArm");  // Bluetooth name
+    Serial.println("Bluetooth Ready. Connect to ESP32_RoboArm");
+
+    // Attach servos to ESP32
+    servo1.attach(18);
+    servo2.attach(19);
+    servo3.attach(21);
+
+    // Set initial positions (90°)
+    servo1.write(90);
+    servo2.write(90);
+    servo3.write(90);
+}
+
+void loop() {
+    if (SerialBT.available()) {
+        char command = SerialBT.read();
+        Serial.println(command);
+
+        // Control Servos using Bluetooth commands
+        if (command == 'A') {
+            servo1.write(45);  // Move Servo 1 to 45°
+        } else if (command == 'B') {
+            servo1.write(135); // Move Servo 1 to 135°
+        } else if (command == 'C') {
+            servo2.write(45);  // Move Servo 2 to 45°
+        } else if (command == 'D') {
+            servo2.write(135); // Move Servo 2 to 135°
+        } else if (command == 'E') {
+            servo3.write(45);  // Move Servo 3 to 45°
+        } else if (command == 'F') {
+            servo3.write(135); // Move Servo 3 to 135°
+        }
+    }
+}
